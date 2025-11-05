@@ -1,34 +1,16 @@
 import nodemailer from "nodemailer";
 
 // Create transporter
-const createTransporter = () => {
-  // For development: Use Ethereal (fake SMTP)
-  if (process.env.NODE_ENV === "development" && !process.env.EMAIL_HOST) {
-    console.warn("⚠️  Using Ethereal fake SMTP for development");
-    // You'll need to create ethereal account first
-    return nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
-      auth: {
-        user: process.env.ETHEREAL_USER || "your-ethereal-user",
-        pass: process.env.ETHEREAL_PASS || "your-ethereal-pass"
-      }
-    });
-  }
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: "opabunmidavid@gmail.com",
+    pass: "ncqrzytcnxljswxy", // no spaces
+  },
+});
 
-  // For production: Use real SMTP (Gmail, SendGrid, Mailgun, etc.)
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT || 587,
-    secure: process.env.EMAIL_SECURE === "true", // true for 465, false for other ports
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-};
-
-const transporter = createTransporter();
 
 // Verify connection configuration
 transporter.verify((error, success) => {

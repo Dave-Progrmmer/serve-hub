@@ -17,7 +17,7 @@ const createTransporter = () => {
   }
 
   // For production: Use real SMTP (Gmail, SendGrid, Mailgun, etc.)
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT || 587,
     secure: process.env.EMAIL_SECURE === "true", // true for 465, false for other ports

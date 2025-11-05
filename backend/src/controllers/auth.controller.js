@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import User from "../models/user.js";
+import { sendWelcomeEmail } from "../services/email.service.js";
 
 // Generate JWT
 const generateToken = (id) => {
@@ -27,6 +28,8 @@ export const registerUser = async (req, res, next) => {
 
     const user = await User.create({ name, email, password: hashedPassword, role });
     const token = generateToken(user._id);
+
+    sendWelcomeEmail(user).catch(err => console.error("Email error:", err));
 
     res.status(201).json({
       success: true,

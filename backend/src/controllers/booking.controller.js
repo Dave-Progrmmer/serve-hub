@@ -6,13 +6,11 @@ export const createBooking = async (req, res, next) => {
   try {
     const { service, date, totalPrice, notes, provider } = req.body;
 
-    // Check service exists
     const serviceDoc = await Service.findById(service);
     if (!serviceDoc) {
       return res.status(404).json({ message: "Service not found" });
     }
 
-    // Check for booking conflicts (same provider, same date)
     const existingBooking = await Booking.findOne({
       provider,
       date: {
@@ -49,40 +47,9 @@ export const createBooking = async (req, res, next) => {
   }
 };
 
-export const getBookings = async (req, res, next) => {
+export const updateBookingStatus = async (req, res, next) => {
   try {
-    const { status, page = 1, limit = 10 } = req.query;
-    
-    const filters = {
-      $or: [{ client: req.user._id }, { provider: req.user._id }],
-    };
-
-    if (status) filters.status = status;
-
-    const bookings = await Booking.find(filters)
-      .populate("client", "name email phone")
-      .populate("provider", "name email phone")
-      .populate("service", "title price category")
-      .sort({ date: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const count = await Booking.countDocuments(filters);
-
-    res.json({
-      success: true,
-      data: bookings,
-      totalPages: Math.ceil(count / limit),
-      currentPage: page,
-      total: count
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-export const getBooking = async (req, res, next) => {
-  try {
+    const { status } = req.body;
     const booking = await Booking.findById(req.params.id)
       .populate("client provider service");
 
@@ -90,32 +57,7 @@ export const getBooking = async (req, res, next) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    // Check authorization
-    const isAuthorized = 
-      booking.client._id.toString() === req.user._id.toString() ||
-      booking.provider._id.toString() === req.user._id.toString();
-
-    if (!isAuthorized) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
-
-    res.json({ success: true, data: booking });
-  } catch (err) {
-    next(err);
-  }
-};
-
-export const updateBookingStatus = async (req, res, next) => {
-  try {
-    const { status } = req.body;
-    const booking = await Booking.findById(req.params.id);
-
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
-    }
-
-    // Only provider can update status
-    if (booking.provider.toString() !== req.user._id.toString()) {
+    if (booking.provider._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Only provider can update booking status" });
     }
 
@@ -136,7 +78,6 @@ export const cancelBooking = async (req, res, next) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    // Both client and provider can cancel
     const canCancel = 
       booking.client.toString() === req.user._id.toString() ||
       booking.provider.toString() === req.user._id.toString();

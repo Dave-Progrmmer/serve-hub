@@ -1,18 +1,20 @@
 import Booking from "../models/booking.js";
 import Service from "../models/service.js";
+import User from "../models/user.js";
 import dayjs from "dayjs";
+import { sendPushNotification } from '../services/push.service.js';
 
 export const createBooking = async (req, res, next) => {
   try {
-    const { service, date, totalPrice, notes, provider } = req.body;
-
+    const { service, date, totalPrice, notes, provider: providerId } = req.body;
+    
     const serviceDoc = await Service.findById(service);
     if (!serviceDoc) {
       return res.status(404).json({ message: "Service not found" });
     }
 
     const existingBooking = await Booking.findOne({
-      provider,
+      provider: providerId,
       date: {
         $gte: dayjs(date).startOf("day").toDate(),
         $lte: dayjs(date).endOf("day").toDate(),
@@ -28,7 +30,7 @@ export const createBooking = async (req, res, next) => {
 
     const booking = await Booking.create({
       client: req.user._id,
-      provider,
+      provider: providerId,
       service,
       date,
       totalPrice,
@@ -40,6 +42,20 @@ export const createBooking = async (req, res, next) => {
       { path: "provider", select: "name email phone" },
       { path: "service", select: "title price category" }
     ]);
+
+    // Send push notification to provider
+    const provider = await User.findById(providerId);
+    if (provider && provider.pushToken) {
+      await sendPushNotification(
+        provider.pushToken,
+        'New Booking Request',
+        `${req.user.name} wants to book ${serviceDoc.title}`,
+        {
+          type: 'booking',
+          bookingId: booking._id,
+        }
+      );
+    }
 
     res.status(201).json({ success: true, data: populatedBooking });
   } catch (err) {

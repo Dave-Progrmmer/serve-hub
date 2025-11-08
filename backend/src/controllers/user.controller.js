@@ -58,6 +58,27 @@ export const updateUser = async (req, res, next) => {
   }
 };
 
+// @desc Save push notification token
+export const savePushToken = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({ message: "Token is required" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { pushToken: token },
+      { new: true }
+    ).select("-password");
+
+    res.json({ success: true, user });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // @desc Delete user
 export const deleteUser = async (req, res, next) => {
   try {

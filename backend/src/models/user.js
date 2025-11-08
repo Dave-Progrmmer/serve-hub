@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema({
   profilePic: String,
   rating: { type: Number, default: 0 },
   verified: { type: Boolean, default: false },
+  pushToken: String, // For push notifications
 }, { timestamps: true });
 
 export default mongoose.model("User", userSchema);
